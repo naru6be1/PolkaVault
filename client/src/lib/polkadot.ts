@@ -129,3 +129,87 @@ export async function transferAsset(
   
   return result;
 }
+
+export interface VerifiedAsset {
+  exists: boolean;
+  onChainDetails?: {
+    name?: string;
+    symbol?: string;
+    decimals?: number;
+    owner?: string;
+    admin?: string;
+    issuer?: string;
+    freezer?: string;
+    supply?: string;
+    deposit?: string;
+    minBalance?: string;
+    isSufficient?: boolean;
+    accounts?: number;
+    sufficients?: number;
+    approvals?: number;
+    status?: string;
+  };
+  error?: string;
+}
+
+export async function verifyAssetOnChain(api: ApiPromise, assetId: string): Promise<VerifiedAsset> {
+  try {
+    // Fetch asset info and metadata
+    const assetInfo = await api.query.assets.asset(assetId);
+    const assetMetadata = await api.query.assets.metadata(assetId);
+    
+    // If asset doesn't exist
+    // @ts-ignore - Handle Polkadot.js API's dynamic types
+    if (assetInfo.isNone || assetInfo.isEmpty) {
+      return { exists: false };
+    }
+    
+    // Parse asset info
+    // @ts-ignore - Handle Polkadot.js API's dynamic types
+    const info = assetInfo.unwrap ? assetInfo.unwrap() : assetInfo;
+    // @ts-ignore - Handle Polkadot.js API's dynamic types
+    const metadata = assetMetadata.unwrap ? assetMetadata.unwrap() : assetMetadata;
+    
+    return {
+      exists: true,
+      onChainDetails: {
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        name: metadata.name?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        symbol: metadata.symbol?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        decimals: metadata.decimals?.toNumber(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        owner: info.owner?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        admin: info.admin?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        issuer: info.issuer?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        freezer: info.freezer?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        supply: info.supply?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        deposit: info.deposit?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        minBalance: info.minBalance?.toString(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        isSufficient: info.isSufficient,
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        accounts: info.accounts?.toNumber(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        sufficients: info.sufficients?.toNumber(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        approvals: info.approvals?.toNumber(),
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        status: info.status?.toString()
+      }
+    };
+  } catch (error) {
+    console.error('Error verifying asset on chain:', error);
+    return {
+      exists: false,
+      error: error instanceof Error ? error.message : 'Unknown error verifying asset'
+    };
+  }
+}

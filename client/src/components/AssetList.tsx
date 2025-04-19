@@ -13,6 +13,7 @@ import { Asset } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatBalance } from "@/lib/utils";
 import { usePolkadot } from "@/hooks/use-polkadot";
+import AssetVerification from "./AssetVerification";
 
 export default function AssetList() {
   const { selectedAccount } = usePolkadot();
@@ -121,11 +122,11 @@ export default function AssetList() {
                 <TableCell className="text-sm text-gray-900">
                   {formatBalance(asset.balance, asset.decimals)}
                 </TableCell>
-                <TableCell>
-                  <Link href="/transfer" className="text-pink-500 hover:text-purple-700 mr-3">
+                <TableCell className="flex space-x-2">
+                  <Link href="/transfer" className="text-pink-500 hover:text-purple-700">
                     Transfer
                   </Link>
-                  <a href="#" className="text-gray-500 hover:text-gray-900">Details</a>
+                  <AssetVerification assetId={asset.assetId} assetName={asset.name} />
                 </TableCell>
               </TableRow>
             ))}

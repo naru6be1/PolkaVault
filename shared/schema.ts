@@ -1,5 +1,6 @@
-import { pgTable, text, serial, integer, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const users = pgTable("users", {
@@ -15,6 +16,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const usersRelations = relations(users, ({ many }) => ({
+  assets: many(assets),
+}));
 
 // Assets in the Polkadot Asset Hub
 export const assets = pgTable("assets", {
@@ -35,6 +40,10 @@ export const insertAssetSchema = createInsertSchema(assets).omit({
 
 export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type Asset = typeof assets.$inferSelect;
+
+export const assetsRelations = relations(assets, ({ many }) => ({
+  transactions: many(transactions),
+}));
 
 // Transactions for Asset Hub
 export const transactions = pgTable("transactions", {
@@ -57,6 +66,13 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  asset: one(assets, {
+    fields: [transactions.assetId],
+    references: [assets.assetId],
+  }),
+}));
 
 // Asset creation payload
 export const createAssetSchema = z.object({

@@ -84,7 +84,13 @@ export default function Staking() {
     },
   });
 
-  const handleCreatePool = async (values: z.infer<typeof createPoolForm["_options"]["resolver"]["schema"]>) => {
+  const handleCreatePool = async (values: {
+    name: string;
+    assetId: string;
+    rewardRate: number;
+    minStakeAmount: string;
+    lockPeriodDays: number;
+  }) => {
     try {
       if (!api || !selectedAccount) {
         toast({

@@ -155,7 +155,7 @@ export default function Liquidity() {
     }
   };
 
-  const handleWithdrawLiquidity = async (values: z.infer<typeof withdrawLiquidityForm["_options"]["resolver"]["schema"]>) => {
+  const handleWithdrawLiquidity = async (values: { positionId: number; percentage: number }) => {
     try {
       if (!api || !selectedAccount) {
         toast({

@@ -333,8 +333,10 @@ export default function Staking() {
                             variant="outline" 
                             className="flex-1"
                             onClick={() => {
+                              setSelectedPosition(position);
                               unstakeForm.setValue("positionId", position.id);
                               unstakeForm.setValue("amount", position.stakedAmount);
+                              setUnstakeDialogOpen(true);
                             }}
                           >
                             Unstake
@@ -362,8 +364,71 @@ export default function Staking() {
             )}
           </div>
 
-          {/* Unstake Form (modal or popup) */}
-          {/* This would be implemented with a dialog component */}
+          {/* Unstake Dialog */}
+          <Dialog open={unstakeDialogOpen} onOpenChange={setUnstakeDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Unstake Assets</DialogTitle>
+                <DialogDescription>
+                  {selectedPosition && (
+                    <>
+                      Unstake from {getPoolDetails(selectedPosition.poolId)?.name || `Pool #${selectedPosition.poolId}`}.
+                      Current staked amount: {selectedPosition.stakedAmount}
+                    </>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...unstakeForm}>
+                <form onSubmit={unstakeForm.handleSubmit(handleUnstake)} className="space-y-4">
+                  <FormField
+                    control={unstakeForm.control}
+                    name="positionId"
+                    render={({ field }) => (
+                      <FormItem hidden>
+                        <FormControl>
+                          <Input type="hidden" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={unstakeForm.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount to Unstake</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setUnstakeDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      onClick={() => {
+                        if (unstakeForm.formState.isValid) {
+                          setUnstakeDialogOpen(false);
+                        }
+                      }}
+                    >
+                      Unstake
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* All Pools Tab */}

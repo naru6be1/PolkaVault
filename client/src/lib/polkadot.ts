@@ -154,9 +154,33 @@ export interface VerifiedAsset {
 
 export async function verifyAssetOnChain(api: ApiPromise, assetId: string): Promise<VerifiedAsset> {
   try {
-    // Fetch asset info and metadata
-    const assetInfo = await api.query.assets.asset(assetId);
-    const assetMetadata = await api.query.assets.metadata(assetId);
+    console.log('Verifying asset on chain, raw assetId:', assetId);
+    
+    // Extract numeric value from asset ID (remove any non-numeric characters)
+    // Our local IDs are in format "#1234" but Polkadot needs just the number
+    const numericAssetId = assetId.replace(/\D/g, '');
+    
+    if (!numericAssetId || isNaN(Number(numericAssetId))) {
+      return { 
+        exists: false, 
+        error: `Invalid asset ID format: ${assetId}. Expected a numeric ID.` 
+      };
+    }
+    
+    console.log('Using numeric assetId for chain query:', numericAssetId);
+    
+    // Fetch asset info and metadata - wrap in a try/catch for better error handling
+    let assetInfo, assetMetadata;
+    try {
+      assetInfo = await api.query.assets.asset(numericAssetId);
+      assetMetadata = await api.query.assets.metadata(numericAssetId);
+    } catch (err) {
+      console.error('Error querying asset data:', err);
+      return { 
+        exists: false, 
+        error: `Error querying blockchain: ${err instanceof Error ? err.message : String(err)}` 
+      };
+    }
     
     // If asset doesn't exist
     // @ts-ignore - Handle Polkadot.js API's dynamic types

@@ -131,18 +131,28 @@ export default function AssetVerification({ assetId, assetName }: AssetVerificat
                 </div>
               </div>
             ) : (
-              <div className="p-4 bg-red-50 rounded-md">
-                <p className="text-red-600 font-medium">Asset Not Found On-Chain</p>
+              <div className="p-4 bg-orange-50 rounded-md">
+                <p className="text-orange-600 font-medium">Asset Not Found On-Chain</p>
                 <p className="text-sm text-gray-600 mt-2">
-                  This asset could not be found on the Polkadot blockchain. This could be due to:
+                  {assetId.startsWith('#') ? (
+                    <>
+                      <strong>This is a local test asset</strong> that has not been created on the Polkadot blockchain.
+                      <br /><br />
+                      In a production environment, you would need to create this asset on-chain first using the Polkadot Asset Hub.
+                    </>
+                  ) : (
+                    <>
+                      This asset could not be found on the Polkadot blockchain. This could be due to:
+                      <ul className="list-disc pl-5 text-sm text-gray-600 mt-1">
+                        <li>The asset has not been created yet</li>
+                        <li>The asset ID is incorrect</li>
+                        <li>Network connection issues</li>
+                      </ul>
+                    </>
+                  )}
                 </p>
-                <ul className="list-disc pl-5 text-sm text-gray-600 mt-1">
-                  <li>The asset has not been created yet</li>
-                  <li>The asset ID is incorrect</li>
-                  <li>Network connection issues</li>
-                </ul>
                 {verificationResult.error && (
-                  <p className="text-xs font-mono mt-2 bg-gray-100 p-2 rounded">
+                  <p className="text-xs font-mono mt-2 bg-gray-100 p-2 rounded break-words">
                     Error: {verificationResult.error}
                   </p>
                 )}

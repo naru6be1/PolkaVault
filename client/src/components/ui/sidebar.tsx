@@ -35,18 +35,15 @@ export default function Sidebar() {
               <Link 
                 key={item.path} 
                 href={item.path}
+                className={cn(
+                  "flex items-center px-4 py-3 text-sm font-medium rounded-md group",
+                  isActive(item.path) 
+                    ? "text-white bg-pink-500" 
+                    : "text-gray-500 hover:bg-gray-50"
+                )}
               >
-                <a 
-                  className={cn(
-                    "flex items-center px-4 py-3 text-sm font-medium rounded-md group",
-                    isActive(item.path) 
-                      ? "text-white bg-pink-500" 
-                      : "text-gray-500 hover:bg-gray-50"
-                  )}
-                >
-                  {item.icon}
-                  {item.label}
-                </a>
+                {item.icon}
+                {item.label}
               </Link>
             ))}
           </nav>

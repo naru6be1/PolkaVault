@@ -122,8 +122,8 @@ export default function AssetList() {
                   {formatBalance(asset.balance, asset.decimals)}
                 </TableCell>
                 <TableCell>
-                  <Link href="/transfer">
-                    <a className="text-pink-500 hover:text-purple-700 mr-3">Transfer</a>
+                  <Link href="/transfer" className="text-pink-500 hover:text-purple-700 mr-3">
+                    Transfer
                   </Link>
                   <a href="#" className="text-gray-500 hover:text-gray-900">Details</a>
                 </TableCell>

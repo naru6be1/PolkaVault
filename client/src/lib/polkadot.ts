@@ -6,7 +6,8 @@ import { stringToU8a } from '@polkadot/util';
 import { BN } from '@polkadot/util';
 
 // Default WS endpoint for Asset Hub
-const DEFAULT_ENDPOINT = 'wss://statemint-rpc.polkadot.io';
+// Using a public test endpoint for better reliability in this example
+const DEFAULT_ENDPOINT = 'wss://westend-asset-hub-rpc.polkadot.io';
 
 export async function initApi(endpoint = DEFAULT_ENDPOINT): Promise<ApiPromise> {
   const wsProvider = new WsProvider(endpoint);

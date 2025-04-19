@@ -29,13 +29,13 @@ export default function Staking() {
   const queryClient = useQueryClient();
 
   // Get all staking pools
-  const { data: stakingPools, isLoading: isLoadingPools } = useQuery({
+  const { data: stakingPools = [], isLoading: isLoadingPools } = useQuery<StakingPool[]>({
     queryKey: ["/api/staking-pools"],
     enabled: !!api,
   });
 
   // Get user's staking positions
-  const { data: myPositions, isLoading: isLoadingPositions } = useQuery({
+  const { data: myPositions = [], isLoading: isLoadingPositions } = useQuery<any[]>({
     queryKey: ["/api/staking-positions"],
     enabled: !!selectedAccount,
   });
@@ -176,7 +176,7 @@ export default function Staking() {
       })
     ),
     defaultValues: {
-      poolId: 0,
+      poolId: 1, // Default to the first pool ID
       amount: "",
     },
   });
@@ -469,35 +469,41 @@ export default function Staking() {
                         </div>
                       </div>
 
-                      <Form {...stakeForm}>
-                        <form onSubmit={stakeForm.handleSubmit(handleStake)} className="space-y-4">
-                          <FormField
-                            control={stakeForm.control}
-                            name="poolId"
-                            render={({ field }) => (
-                              <FormItem hidden>
-                                <FormControl>
-                                  <Input type="hidden" {...field} value={pool.id} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={stakeForm.control}
-                            name="amount"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Amount to Stake</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="0.00" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" className="w-full">Stake</Button>
-                        </form>
-                      </Form>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Amount to Stake
+                          </label>
+                          <div className="mt-2">
+                            <Input 
+                              placeholder="0.00" 
+                              id={`stake-amount-${pool.id}`}
+                              defaultValue=""
+                            />
+                          </div>
+                        </div>
+                        <Button 
+                          className="w-full"
+                          onClick={() => {
+                            const amountInput = document.getElementById(`stake-amount-${pool.id}`) as HTMLInputElement;
+                            const amount = amountInput?.value || '';
+                            
+                            if (!amount) {
+                              toast({
+                                title: "Error",
+                                description: "Please enter an amount to stake",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            
+                            console.log('Staking:', { poolId: pool.id, amount });
+                            handleStake({ poolId: pool.id, amount });
+                          }}
+                        >
+                          Stake
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

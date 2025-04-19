@@ -14,17 +14,18 @@ import { Link } from 'wouter';
 export default function AssetDetails() {
   // Get assetId from URL params
   const [match, params] = useRoute('/asset/:assetId');
-  const assetId = params?.assetId;
+  // For encoded URLs, we need to decode the param
+  const assetId = params?.assetId ? decodeURIComponent(params.assetId) : undefined;
   
   console.log('AssetDetails - Route match:', match);
-  console.log('AssetDetails - Params:', params);
-  console.log('AssetDetails - assetId:', assetId);
+  console.log('AssetDetails - Raw params:', params);
+  console.log('AssetDetails - Decoded assetId:', assetId);
   
   const { selectedAccount } = usePolkadot();
   
   // Need to encode the assetId for the API call since it may contain special characters like #
   const encodedAssetId = assetId ? encodeURIComponent(assetId) : '';
-  console.log('AssetDetails - encodedAssetId:', encodedAssetId);
+  console.log('AssetDetails - API encodedAssetId:', encodedAssetId);
   
   const { data: asset, isLoading, error } = useQuery<Asset>({
     queryKey: [`/api/assets/${encodedAssetId}`],

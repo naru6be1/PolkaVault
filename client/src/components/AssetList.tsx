@@ -109,7 +109,10 @@ export default function AssetList() {
               <TableRow key={asset.assetId}>
                 <TableCell className="font-mono text-gray-900">{asset.assetId}</TableCell>
                 <TableCell>
-                  <Link href={`/asset/${asset.assetId}`}>
+                  <Link href={`/asset/${encodeURIComponent(asset.assetId)}`} onClick={() => {
+                    console.log('Asset clicked:', asset);
+                    console.log('Navigating to:', `/asset/${encodeURIComponent(asset.assetId)}`);
+                  }}>
                     <div className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <div className={`h-8 w-8 rounded-full ${getRandomColor(asset.name)} flex items-center justify-center text-sm font-medium`}>
                         {getAssetInitials(asset.name)}

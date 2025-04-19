@@ -9,6 +9,8 @@ import CreateAsset from "@/pages/CreateAsset";
 import TransactionHistory from "@/pages/TransactionHistory";
 import Settings from "@/pages/Settings";
 import AssetDetails from "@/pages/AssetDetails";
+import Liquidity from "@/pages/Liquidity";
+import Staking from "@/pages/Staking";
 import Sidebar from "@/components/ui/sidebar";
 import { PolkadotProvider } from "@/hooks/use-polkadot";
 import { useEffect, useState } from "react";
@@ -42,6 +44,12 @@ function Router() {
         break;
       case "settings":
         setPageTitle("Settings");
+        break;
+      case "liquidity":
+        setPageTitle("Liquidity Pools");
+        break;
+      case "staking":
+        setPageTitle("Staking");
         break;
       default:
         setPageTitle("Dashboard");
@@ -92,6 +100,8 @@ function Router() {
             <Route path="/transfer" component={Transfer} />
             <Route path="/create" component={CreateAsset} />
             <Route path="/transactions" component={TransactionHistory} />
+            <Route path="/liquidity" component={Liquidity} />
+            <Route path="/staking" component={Staking} />
             <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>

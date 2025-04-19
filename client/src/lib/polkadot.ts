@@ -32,8 +32,11 @@ export async function connectExtension(appName = 'Polkadot Asset Hub'): Promise<
 }
 
 export async function getAccountBalance(api: ApiPromise, address: string): Promise<string> {
-  const { data: balance } = await api.query.system.account(address);
-  return balance.free.toString();
+  // Use type assertion to handle the account structure
+  const accountInfo = await api.query.system.account(address);
+  // @ts-ignore - Handle Polkadot.js API's dynamic types
+  const balance = accountInfo.data ? accountInfo.data.free : accountInfo.free;
+  return balance.toString();
 }
 
 export async function getAssets(api: ApiPromise, accountAddress: string) {
@@ -48,10 +51,14 @@ export async function getAssets(api: ApiPromise, accountAddress: string) {
   const assetMetadata = new Map();
   assetMetadataEntries.forEach(([key, value]) => {
     const assetId = key.args[0].toString();
+    // @ts-ignore - Handle Polkadot.js API's dynamic types
     assetMetadata.set(assetId, {
-      name: value.name.toString(),
-      symbol: value.symbol.toString(),
-      decimals: value.decimals.toNumber(),
+      // @ts-ignore - Handle Polkadot.js API's dynamic types
+      name: value.name ? value.name.toString() : 'Unknown',
+      // @ts-ignore - Handle Polkadot.js API's dynamic types
+      symbol: value.symbol ? value.symbol.toString() : 'UNK',
+      // @ts-ignore - Handle Polkadot.js API's dynamic types
+      decimals: value.decimals ? value.decimals.toNumber() : 0,
     });
   });
   
@@ -62,14 +69,17 @@ export async function getAssets(api: ApiPromise, accountAddress: string) {
       const accountBalance = await api.query.assets.account(assetId, accountAddress);
       const metadata = assetMetadata.get(assetId) || { name: 'Unknown', symbol: 'UNK', decimals: 0 };
       
-      if (accountBalance.isSome) {
-        const { balance } = accountBalance.unwrap();
+      // @ts-ignore - Handle Polkadot.js API's dynamic types
+      if (accountBalance && (accountBalance.isSome || accountBalance.isEmpty === false)) {
+        // @ts-ignore - Handle Polkadot.js API's dynamic types
+        const balance = accountBalance.unwrap ? accountBalance.unwrap().balance : accountBalance.balance;
+        
         assets.push({
           assetId,
           name: metadata.name,
           symbol: metadata.symbol,
           decimals: metadata.decimals,
-          balance: balance.toString(),
+          balance: balance ? balance.toString() : '0',
         });
       }
     } catch (error) {

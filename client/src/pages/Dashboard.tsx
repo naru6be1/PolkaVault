@@ -57,8 +57,8 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-gray-900">Recent Transactions</h2>
-          <Link href="/transactions">
-            <a className="text-pink-500 hover:text-purple-700 text-sm font-medium">View All</a>
+          <Link href="/transactions" className="text-pink-500 hover:text-purple-700 text-sm font-medium">
+            View All
           </Link>
         </div>
         

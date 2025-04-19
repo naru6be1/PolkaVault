@@ -16,10 +16,15 @@ export default function AssetDetails() {
   const [match, params] = useRoute('/asset/:assetId');
   const assetId = params?.assetId;
   
+  console.log('AssetDetails - Route match:', match);
+  console.log('AssetDetails - Params:', params);
+  console.log('AssetDetails - assetId:', assetId);
+  
   const { selectedAccount } = usePolkadot();
   
   // Need to encode the assetId for the API call since it may contain special characters like #
   const encodedAssetId = assetId ? encodeURIComponent(assetId) : '';
+  console.log('AssetDetails - encodedAssetId:', encodedAssetId);
   
   const { data: asset, isLoading, error } = useQuery<Asset>({
     queryKey: [`/api/assets/${encodedAssetId}`],

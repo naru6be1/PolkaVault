@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 function Router() {
   const [location] = useLocation();
   const [pageTitle, setPageTitle] = useState("Dashboard");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const path = location.split("/")[1];
@@ -49,12 +50,16 @@ function Router() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="bg-white shadow">
           <div className="flex items-center justify-between h-16 px-4">
             <div className="md:hidden">
-              <button type="button" className="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-500">
+              <button 
+                type="button" 
+                className="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                onClick={() => setIsSidebarOpen(true)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>

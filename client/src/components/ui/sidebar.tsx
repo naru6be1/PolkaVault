@@ -1,9 +1,14 @@
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { usePolkadot } from '@/hooks/use-polkadot';
-import { Home, CreditCard, ArrowRightLeft, PlusCircle, FileText, Settings } from 'lucide-react';
+import { Home, CreditCard, ArrowRightLeft, PlusCircle, FileText, Settings, X } from 'lucide-react';
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { selectedAccount, connectWallet, disconnectWallet } = usePolkadot();
 
@@ -21,13 +26,37 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="hidden md:flex md:flex-shrink-0">
-      <div className="flex flex-col w-64 bg-white shadow-lg">
-        <div className="flex items-center justify-center h-16 border-b">
+    <div 
+      className={cn(
+        "md:flex md:flex-shrink-0",
+        isOpen ? "block fixed inset-0 z-50" : "hidden"
+      )}
+    >
+      {/* Overlay to close sidebar on mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 md:hidden" 
+          onClick={onClose}
+        />
+      )}
+      
+      <div className={cn(
+        "flex flex-col w-64 bg-white shadow-lg",
+        isOpen ? "fixed left-0 h-full z-50" : ""
+      )}>
+        <div className="flex items-center justify-between h-16 border-b px-4">
           <div className="flex items-center">
             <div className="h-8 w-8 bg-pink-500 rounded-full"></div>
             <span className="ml-2 text-lg font-semibold text-gray-900">Asset Hub</span>
           </div>
+          {isOpen && (
+            <button 
+              onClick={onClose}
+              className="md:hidden text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
         <div className="flex flex-col flex-grow overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-1">
@@ -41,6 +70,7 @@ export default function Sidebar() {
                     ? "text-white bg-pink-500" 
                     : "text-gray-500 hover:bg-gray-50"
                 )}
+                onClick={isOpen ? onClose : undefined}
               >
                 {item.icon}
                 {item.label}

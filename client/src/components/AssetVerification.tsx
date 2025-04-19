@@ -50,7 +50,7 @@ export default function AssetVerification({ assetId, assetName }: AssetVerificat
         <Button 
           variant="outline" 
           size="sm" 
-          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+          className="bg-green-50 text-green-600 hover:text-green-700 hover:bg-green-100 whitespace-nowrap"
           onClick={() => {
             setDialogOpen(true);
             if (!verificationResult) {

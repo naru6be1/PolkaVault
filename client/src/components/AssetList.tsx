@@ -124,11 +124,13 @@ export default function AssetList() {
                 <TableCell className="text-sm text-gray-900">
                   {formatBalance(asset.balance, asset.decimals)}
                 </TableCell>
-                <TableCell className="flex space-x-2">
-                  <Link href="/transfer" className="text-pink-500 hover:text-purple-700">
-                    Transfer
-                  </Link>
-                  <AssetVerification assetId={asset.assetId} assetName={asset.name} />
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Link href={`/transfer?assetId=${asset.assetId}`} className="text-pink-500 hover:text-purple-700">
+                      <span className="whitespace-nowrap">Transfer</span>
+                    </Link>
+                    <AssetVerification assetId={asset.assetId} assetName={asset.name} />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

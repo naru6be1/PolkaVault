@@ -18,8 +18,11 @@ export default function AssetDetails() {
   
   const { selectedAccount } = usePolkadot();
   
+  // Need to encode the assetId for the API call since it may contain special characters like #
+  const encodedAssetId = assetId ? encodeURIComponent(assetId) : '';
+  
   const { data: asset, isLoading, error } = useQuery<Asset>({
-    queryKey: [`/api/assets/${assetId}`],
+    queryKey: [`/api/assets/${encodedAssetId}`],
     enabled: !!assetId && !!selectedAccount,
   });
 

@@ -9,12 +9,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Create a global variable to store the sidebar state and setter
+let globalSetSidebarOpen: ((open: boolean) => void) | null = null;
+
+// Function to register the sidebar setter
+export function registerSidebarToggle(setSidebarOpen: (open: boolean) => void) {
+  globalSetSidebarOpen = setSidebarOpen;
+}
+
 type HeaderProps = {
   title: string;
 };
 
 export default function Header({ title }: HeaderProps) {
   const { selectedAccount, accounts, selectAccount, disconnectWallet } = usePolkadot();
+
+  const toggleSidebar = () => {
+    if (globalSetSidebarOpen) {
+      globalSetSidebarOpen(true);
+    }
+  };
 
   return (
     <header className="bg-white shadow">
@@ -23,6 +37,7 @@ export default function Header({ title }: HeaderProps) {
           <button 
             type="button" 
             className="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            onClick={toggleSidebar}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

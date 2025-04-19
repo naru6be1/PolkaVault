@@ -15,11 +15,17 @@ import Sidebar from "@/components/ui/sidebar";
 import { PolkadotProvider } from "@/hooks/use-polkadot";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { registerSidebarToggle } from "@/components/Header";
 
 function Router() {
   const [location] = useLocation();
   const [pageTitle, setPageTitle] = useState("Dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Register the sidebar toggle function so it can be used from Header component
+  useEffect(() => {
+    registerSidebarToggle(setIsSidebarOpen);
+  }, []);
 
   useEffect(() => {
     const path = location.split("/")[1];

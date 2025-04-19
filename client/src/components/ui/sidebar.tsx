@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { usePolkadot } from '@/hooks/use-polkadot';
-import { Home, CreditCard, ArrowRightLeft, PlusCircle, FileText, Settings, X } from 'lucide-react';
+import { Home, CreditCard, ArrowRightLeft, PlusCircle, FileText, Settings, X, Droplet, CoinsIcon } from 'lucide-react';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -22,6 +22,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: "/transfer", icon: <ArrowRightLeft className="h-5 w-5 mr-3" />, label: "Transfer" },
     { path: "/create", icon: <PlusCircle className="h-5 w-5 mr-3" />, label: "Create Asset" },
     { path: "/transactions", icon: <FileText className="h-5 w-5 mr-3" />, label: "Transaction History" },
+    { path: "/liquidity", icon: <Droplet className="h-5 w-5 mr-3" />, label: "Liquidity Pools" },
+    { path: "/staking", icon: <CoinsIcon className="h-5 w-5 mr-3" />, label: "Staking" },
     { path: "/settings", icon: <Settings className="h-5 w-5 mr-3" />, label: "Settings" },
   ];
 

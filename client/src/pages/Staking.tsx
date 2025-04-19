@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { usePolkadot } from "@/hooks/use-polkadot";
 import { StakingPool, StakeAssetsPayload } from "@shared/schema";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { z } from "zod";
 import { formatBalance } from "@/lib/utils";
 import Header from "@/components/Header";
@@ -23,6 +24,9 @@ export default function Staking() {
   const { toast } = useToast();
   const { api, selectedAccount, balance } = usePolkadot();
   const [activeTab, setActiveTab] = useState("myPositions");
+  const [unstakeDialogOpen, setUnstakeDialogOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   // Get all staking pools
   const { data: stakingPools, isLoading: isLoadingPools } = useQuery({
@@ -34,6 +38,113 @@ export default function Staking() {
   const { data: myPositions, isLoading: isLoadingPositions } = useQuery({
     queryKey: ["/api/staking-positions"],
     enabled: !!selectedAccount,
+  });
+  
+  // Mutations
+  const createPoolMutation = useMutation({
+    mutationFn: async (values: {
+      name: string;
+      assetId: string;
+      rewardRate: number;
+      minStakeAmount: string;
+      lockPeriodDays: number;
+    }) => {
+      return apiRequest("/api/staking-pools", {
+        method: "POST",
+        body: JSON.stringify(values),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-pools"] });
+      toast({
+        title: "Success!",
+        description: "Staking pool created successfully",
+      });
+      createPoolForm.reset();
+      setActiveTab("allPools");
+    },
+    onError: (error) => {
+      console.error("Error creating staking pool:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create staking pool",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const stakeMutation = useMutation({
+    mutationFn: async (values: StakeAssetsPayload) => {
+      return apiRequest("/api/staking-positions", {
+        method: "POST",
+        body: JSON.stringify(values),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-positions"] });
+      toast({
+        title: "Success!",
+        description: "Assets staked successfully",
+      });
+      stakeForm.reset();
+      setActiveTab("myPositions");
+    },
+    onError: (error) => {
+      console.error("Error staking assets:", error);
+      toast({
+        title: "Error",
+        description: "Failed to stake assets",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const unstakeMutation = useMutation({
+    mutationFn: async (values: { positionId: number; amount: string }) => {
+      return apiRequest(`/api/staking-positions/${values.positionId}/unstake`, {
+        method: "POST",
+        body: JSON.stringify({ amount: values.amount }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-positions"] });
+      toast({
+        title: "Success!",
+        description: "Assets unstaked successfully",
+      });
+      unstakeForm.reset();
+    },
+    onError: (error) => {
+      console.error("Error unstaking assets:", error);
+      toast({
+        title: "Error",
+        description: "Failed to unstake assets",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const claimRewardsMutation = useMutation({
+    mutationFn: async (positionId: number) => {
+      return apiRequest(`/api/staking-positions/${positionId}/claim-rewards`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-positions"] });
+      toast({
+        title: "Success!",
+        description: "Rewards claimed successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error claiming rewards:", error);
+      toast({
+        title: "Error",
+        description: "Failed to claim rewards",
+        variant: "destructive",
+      });
+    }
   });
 
   // Form for creating a new staking pool
@@ -91,130 +202,55 @@ export default function Staking() {
     minStakeAmount: string;
     lockPeriodDays: number;
   }) => {
-    try {
-      if (!api || !selectedAccount) {
-        toast({
-          title: "Error",
-          description: "Please connect your wallet first",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await apiRequest("/api/staking-pools", {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
-
-      toast({
-        title: "Success!",
-        description: "Staking pool created successfully",
-      });
-
-      createPoolForm.reset();
-      setActiveTab("myPositions");
-    } catch (error) {
-      console.error("Error creating staking pool:", error);
+    if (!api || !selectedAccount) {
       toast({
         title: "Error",
-        description: "Failed to create staking pool",
+        description: "Please connect your wallet first",
         variant: "destructive",
       });
+      return;
     }
+    
+    createPoolMutation.mutate(values);
   };
 
   const handleStake = async (values: StakeAssetsPayload) => {
-    try {
-      if (!api || !selectedAccount) {
-        toast({
-          title: "Error",
-          description: "Please connect your wallet first",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await apiRequest("/api/staking-positions", {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
-
-      toast({
-        title: "Success!",
-        description: "Assets staked successfully",
-      });
-
-      stakeForm.reset();
-      setActiveTab("myPositions");
-    } catch (error) {
-      console.error("Error staking assets:", error);
+    if (!api || !selectedAccount) {
       toast({
         title: "Error",
-        description: "Failed to stake assets",
+        description: "Please connect your wallet first",
         variant: "destructive",
       });
+      return;
     }
+    
+    stakeMutation.mutate(values);
   };
 
-  const handleUnstake = async (values: z.infer<typeof unstakeForm["_options"]["resolver"]["schema"]>) => {
-    try {
-      if (!api || !selectedAccount) {
-        toast({
-          title: "Error",
-          description: "Please connect your wallet first",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await apiRequest(`/api/staking-positions/${values.positionId}/unstake`, {
-        method: "POST",
-        body: JSON.stringify({ amount: values.amount }),
-      });
-
-      toast({
-        title: "Success!",
-        description: "Assets unstaked successfully",
-      });
-
-      unstakeForm.reset();
-    } catch (error) {
-      console.error("Error unstaking assets:", error);
+  const handleUnstake = async (values: { positionId: number; amount: string }) => {
+    if (!api || !selectedAccount) {
       toast({
         title: "Error",
-        description: "Failed to unstake assets",
+        description: "Please connect your wallet first",
         variant: "destructive",
       });
+      return;
     }
+    
+    unstakeMutation.mutate(values);
   };
 
   const handleClaimRewards = async (positionId: number) => {
-    try {
-      if (!api || !selectedAccount) {
-        toast({
-          title: "Error",
-          description: "Please connect your wallet first",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await apiRequest(`/api/staking-positions/${positionId}/claim-rewards`, {
-        method: "POST",
-      });
-
-      toast({
-        title: "Success!",
-        description: "Rewards claimed successfully",
-      });
-    } catch (error) {
-      console.error("Error claiming rewards:", error);
+    if (!api || !selectedAccount) {
       toast({
         title: "Error",
-        description: "Failed to claim rewards",
+        description: "Please connect your wallet first",
         variant: "destructive",
       });
+      return;
     }
+    
+    claimRewardsMutation.mutate(positionId);
   };
 
   // Helper function to get a pool's details

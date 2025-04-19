@@ -109,15 +109,17 @@ export default function AssetList() {
               <TableRow key={asset.assetId}>
                 <TableCell className="font-mono text-gray-900">{asset.assetId}</TableCell>
                 <TableCell>
-                  <div className="flex items-center">
-                    <div className={`h-8 w-8 rounded-full ${getRandomColor(asset.name)} flex items-center justify-center text-sm font-medium`}>
-                      {getAssetInitials(asset.name)}
+                  <Link href={`/asset/${asset.assetId}`}>
+                    <div className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <div className={`h-8 w-8 rounded-full ${getRandomColor(asset.name)} flex items-center justify-center text-sm font-medium`}>
+                        {getAssetInitials(asset.name)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{asset.name}</div>
+                        <div className="text-xs text-gray-500">{asset.symbol}</div>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{asset.name}</div>
-                      <div className="text-xs text-gray-500">{asset.symbol}</div>
-                    </div>
-                  </div>
+                  </Link>
                 </TableCell>
                 <TableCell className="text-sm text-gray-900">
                   {formatBalance(asset.balance, asset.decimals)}

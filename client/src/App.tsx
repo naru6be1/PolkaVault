@@ -8,6 +8,7 @@ import Transfer from "@/pages/Transfer";
 import CreateAsset from "@/pages/CreateAsset";
 import TransactionHistory from "@/pages/TransactionHistory";
 import Settings from "@/pages/Settings";
+import AssetDetails from "@/pages/AssetDetails";
 import Sidebar from "@/components/ui/sidebar";
 import { PolkadotProvider } from "@/hooks/use-polkadot";
 import { useEffect, useState } from "react";
@@ -25,6 +26,9 @@ function Router() {
         break;
       case "assets":
         setPageTitle("My Assets");
+        break;
+      case "asset":
+        setPageTitle("Asset Details");
         break;
       case "transfer":
         setPageTitle("Transfer");
@@ -79,6 +83,7 @@ function Router() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/assets" component={MyAssets} />
+            <Route path="/asset/:assetId" component={AssetDetails} />
             <Route path="/transfer" component={Transfer} />
             <Route path="/create" component={CreateAsset} />
             <Route path="/transactions" component={TransactionHistory} />

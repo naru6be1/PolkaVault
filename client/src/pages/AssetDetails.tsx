@@ -28,7 +28,7 @@ export default function AssetDetails() {
   
   const { data: asset, isLoading, error } = useQuery<Asset>({
     queryKey: [`/api/assets/${encodedAssetId}`],
-    enabled: !!assetId && !!selectedAccount,
+    enabled: !!assetId,
   });
 
   if (!selectedAccount) {

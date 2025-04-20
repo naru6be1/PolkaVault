@@ -49,13 +49,22 @@ export default function AssetModal({ isOpen, onClose }: AssetModalProps) {
 
   const createAssetMutation = useMutation({
     mutationFn: (values: z.infer<typeof createAssetSchema>) => {
-      return apiRequest("POST", "/api/assets", values);
+      console.log("Creating asset with values:", values);
+      return apiRequest("/api/assets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(values)
+      });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Asset created successfully:", data);
       toast({
         title: "Asset Created",
         description: "Your new asset has been created successfully",
       });
+      // Force refresh the assets list to show the new asset
       queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
       onClose();
@@ -70,8 +79,76 @@ export default function AssetModal({ isOpen, onClose }: AssetModalProps) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof createAssetSchema>) {
-    createAssetMutation.mutate(values);
+  async function onSubmit(values: z.infer<typeof createAssetSchema>) {
+    try {
+      // Show a loading toast
+      toast({
+        title: "Creating asset...",
+        description: "Please wait while we create your asset"
+      });
+      
+      // Make the request directly to handle HTTP 409 responses properly
+      const fetchResponse = await fetch("/api/assets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+      
+      console.log("Asset creation response status:", fetchResponse.status);
+      const responseText = await fetchResponse.text();
+      
+      let response;
+      try {
+        response = JSON.parse(responseText);
+        console.log("Asset creation response:", response);
+      } catch (e) {
+        console.error("Failed to parse response as JSON:", e);
+        // Treat as a general error
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Invalid response from server"
+        });
+        return;
+      }
+
+      // Special handling for duplicate asset (HTTP 409 Conflict)
+      if (fetchResponse.status === 409) {
+        console.log("Asset already exists, displaying appropriate message");
+        toast({
+          title: "Asset Already Exists",
+          description: response.message || `An asset with name ${values.name} already exists`,
+          variant: "default"
+        });
+      } else if (!fetchResponse.ok) {
+        // Any other error status
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.message || "Failed to create asset"
+        });
+      } else {
+        // Success!
+        toast({
+          title: "Success!",
+          description: "Asset created successfully",
+        });
+      }
+      
+      // Always invalidate queries and reset the form regardless of outcome
+      queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
+      onClose();
+      form.reset();
+    } catch (error: any) {
+      console.error("Error in asset creation:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error?.message || "Failed to create asset"
+      });
+    }
   }
 
   return (

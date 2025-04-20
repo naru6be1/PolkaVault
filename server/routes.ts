@@ -49,7 +49,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new asset
   app.post("/api/assets", async (req, res) => {
     try {
+      console.log("Creating asset with payload:", req.body);
       const payload = createAssetSchema.parse(req.body);
+      
+      // Check if an asset with the same name and symbol already exists
+      const existingAssets = await storage.getAssets();
+      const existingAsset = existingAssets.find(a => 
+        a.name.toLowerCase() === payload.name.toLowerCase() && 
+        a.symbol.toLowerCase() === payload.symbol.toLowerCase()
+      );
+      
+      if (existingAsset) {
+        console.log(`Asset with name '${payload.name}' and symbol '${payload.symbol}' already exists`);
+        return res.status(409).json({ 
+          message: `Asset with name '${payload.name}' and symbol '${payload.symbol}' already exists`,
+          existingAssetId: existingAsset.assetId
+        });
+      }
       
       // In a real implementation, this would interact with Polkadot.js API
       // For now, we'll create a simple in-memory representation
@@ -62,8 +78,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: req.body.creator || "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty", // Default address if not provided
       };
       
+      console.log("Creating new asset:", newAsset);
       const validatedAsset = insertAssetSchema.parse(newAsset);
       const asset = await storage.createAsset(validatedAsset);
+      console.log("Asset created successfully:", asset);
       
       // Create a transaction for asset creation
       const transaction = {

@@ -37,9 +37,11 @@ export default function Liquidity() {
   });
   
   // Get all available assets
-  const { data: assets, isLoading: isLoadingAssets } = useQuery<Asset[]>({
+  const { data: assets, isLoading: isLoadingAssets, refetch: refetchAssets } = useQuery<Asset[]>({
     queryKey: ["/api/assets"],
     enabled: true,
+    // Ensure we always get fresh data when this component is mounted
+    staleTime: 0,
   });
 
   // Form for creating a new pool
@@ -407,7 +409,24 @@ export default function Liquidity() {
     <div className="container mx-auto p-4">
       <Header title="Liquidity Pools" />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(tab) => {
+        console.log("Changing tab to:", tab);
+        setActiveTab(tab);
+        
+        // When switching to create pool tab, refresh assets list
+        if (tab === "createPool") {
+          console.log("Refreshing assets for pool creation form...");
+          refetchAssets();
+          
+          // Also reset the form
+          createPoolForm.reset({
+            name: "",
+            assetAId: "",
+            assetBId: "",
+            fee: 0.003,
+          });
+        }
+      }} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="myPools">My Pools</TabsTrigger>
           <TabsTrigger value="allPools">All Pools</TabsTrigger>

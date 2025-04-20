@@ -519,18 +519,9 @@ export default function Staking() {
                               return;
                             }
                             
-                            // Use mock staking for now to demonstrate UI functionality
-                            // This simulates a successful staking without hitting the backend
-                            toast({
-                              title: "Success!",
-                              description: `Successfully staked ${amount} ${pool.asset?.symbol || ''} in ${pool.name}`,
-                            });
-                            
-                            // Clear input field
-                            amountInput.value = '';
-                            
-                            // In a real app, we would hit the backend
-                            // handleStake({ poolId: pool.id, amount });
+                            // Use the real staking API
+                            console.log('Staking:', { poolId: pool.id, amount });
+                            handleStake({ poolId: pool.id, amount });
                           }}
                         >
                           Stake

@@ -665,6 +665,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             stakedAmount: payload.amount,
             endDate,
             status: "active",
+            // Add createdAt and updatedAt fields explicitly
+            createdAt: new Date(),
+            updatedAt: new Date(),
           };
           
           const validatedPosition = insertStakingPositionSchema.parse(newPosition);

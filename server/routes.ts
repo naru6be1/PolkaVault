@@ -670,10 +670,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updatedAt: new Date(),
           };
           
-          const validatedPosition = insertStakingPositionSchema.parse(newPosition);
-          console.log("Creating staking position with data:", validatedPosition);
-          position = await storage.createStakingPosition(validatedPosition);
-          console.log("Staking position created:", position);
+          try {
+            console.log("insertStakingPositionSchema:", insertStakingPositionSchema);
+            console.log("Raw position data:", newPosition);
+            const validatedPosition = insertStakingPositionSchema.parse(newPosition);
+            console.log("Validated position data:", validatedPosition);
+            position = await storage.createStakingPosition(validatedPosition);
+            console.log("Staking position created:", position);
+          } catch (parseError) {
+            console.error("Schema validation error:", parseError);
+            throw parseError;
+          }
         } catch (e) {
           console.error("Error creating new position:", e);
           return res.status(500).json({ 

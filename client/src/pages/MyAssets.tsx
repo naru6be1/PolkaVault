@@ -23,10 +23,13 @@ export default function MyAssets() {
   const { 
     data: assets, 
     isLoading: isLoadingAssets, 
-    error: assetsError 
+    error: assetsError,
+    refetch: refetchAssets
   } = useQuery<Asset[]>({
     queryKey: ['/api/assets'],
     enabled: !!selectedAccount,
+    // Ensure we don't use stale data
+    staleTime: 0,
   });
 
   if (!selectedAccount) {
@@ -172,7 +175,11 @@ export default function MyAssets() {
 
       <AssetModal 
         isOpen={isAssetModalOpen} 
-        onClose={() => setIsAssetModalOpen(false)} 
+        onClose={() => setIsAssetModalOpen(false)}
+        onAssetCreated={() => {
+          console.log("Asset created callback in MyAssets - refreshing assets");
+          refetchAssets();
+        }}
       />
     </>
   );

@@ -31,9 +31,10 @@ import {
 type AssetModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAssetCreated?: () => void; // Optional callback for when an asset is created
 };
 
-export default function AssetModal({ isOpen, onClose }: AssetModalProps) {
+export default function AssetModal({ isOpen, onClose, onAssetCreated }: AssetModalProps) {
   const { toast } = useToast();
   
   const form = useForm<z.infer<typeof createAssetSchema>>({
@@ -67,6 +68,13 @@ export default function AssetModal({ isOpen, onClose }: AssetModalProps) {
       // Force refresh the assets list to show the new asset
       queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      
+      // Call the callback if provided
+      if (onAssetCreated) {
+        console.log("Calling onAssetCreated callback from mutation");
+        onAssetCreated();
+      }
+      
       onClose();
       form.reset();
     },
@@ -139,6 +147,13 @@ export default function AssetModal({ isOpen, onClose }: AssetModalProps) {
       
       // Always invalidate queries and reset the form regardless of outcome
       queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
+      
+      // If onAssetCreated callback was provided, call it to trigger refresh in parent component
+      if (onAssetCreated && fetchResponse.ok) {
+        console.log("Calling onAssetCreated callback to trigger parent refresh");
+        onAssetCreated();
+      }
+      
       onClose();
       form.reset();
     } catch (error: any) {

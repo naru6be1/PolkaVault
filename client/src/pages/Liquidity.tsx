@@ -93,6 +93,90 @@ export default function Liquidity() {
     },
   });
 
+  // Helper function for pool creation with retry logic
+  const createPoolWithRetry = async (
+    values: {
+      name: string;
+      assetAId: string;
+      assetBId: string;
+      fee: number;
+    },
+    maxRetries = 3
+  ) => {
+    let lastError = null;
+    
+    // Attempt the request up to maxRetries times
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Show attempt number if retrying
+        if (attempt > 1) {
+          console.log(`Retrying pool creation (attempt ${attempt}/${maxRetries})...`);
+        }
+        
+        // Make the request directly to see raw response
+        const fetchResponse = await fetch("/api/liquidity-pools", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+        
+        console.log(`Attempt ${attempt} - Raw response status:`, fetchResponse.status);
+        
+        // Display headers as simple object
+        const headers: Record<string, string> = {};
+        fetchResponse.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log(`Attempt ${attempt} - Raw response headers:`, headers);
+        
+        const responseText = await fetchResponse.text();
+        console.log(`Attempt ${attempt} - Raw response body:`, responseText);
+        
+        let response;
+        try {
+          response = JSON.parse(responseText);
+        } catch (e) {
+          console.error(`Attempt ${attempt} - Failed to parse response as JSON:`, e);
+          
+          // If we got a 2xx status code but couldn't parse JSON, consider it a success
+          // (might be empty response)
+          if (fetchResponse.status >= 200 && fetchResponse.status < 300) {
+            return { success: true, status: fetchResponse.status };
+          }
+          
+          throw new Error("Invalid response format from server");
+        }
+        
+        console.log(`Attempt ${attempt} - Parsed pool creation response:`, response);
+        
+        if (!fetchResponse.ok) {
+          throw new Error(response.message || response.error || "Failed to create pool");
+        }
+        
+        // Success!
+        return response;
+      } catch (error) {
+        lastError = error;
+        console.error(`Attempt ${attempt} - Error:`, error);
+        
+        // If we've hit the max retries, rethrow the error
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    // Should never get here due to the throw in the loop, but TypeScript needs this
+    throw lastError;
+  };
+  
   const handleCreatePool = async (values: {
     name: string;
     assetAId: string;
@@ -134,56 +218,23 @@ export default function Liquidity() {
         });
         return;
       }
+      
+      // Show loading toast
+      toast({
+        title: "Creating pool...",
+        description: "Please wait while we create your liquidity pool",
+      });
 
-      try {
-        // Make the request directly to see raw response
-        const fetchResponse = await fetch("/api/liquidity-pools", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        });
-        
-        console.log("Raw response status:", fetchResponse.status);
-        
-        // Display headers as simple object
-        const headers: Record<string, string> = {};
-        fetchResponse.headers.forEach((value, key) => {
-          headers[key] = value;
-        });
-        console.log("Raw response headers:", headers);
-        
-        const responseText = await fetchResponse.text();
-        console.log("Raw response body:", responseText);
-        
-        let response;
-        try {
-          response = JSON.parse(responseText);
-        } catch (e) {
-          console.error("Failed to parse response as JSON:", e);
-          throw new Error("Invalid response format from server");
-        }
-        
-        console.log("Parsed pool creation response:", response);
-        
-        if (!fetchResponse.ok) {
-          throw new Error(response.message || response.error || "Failed to create pool");
-        }
-        
-        // Success! Invalidate the cache to refresh the pool list
-        queryClient.invalidateQueries({ queryKey: ["/api/liquidity-pools"] });
-        
-        toast({
-          title: "Success!",
-          description: "Liquidity pool created successfully",
-        });
-        
-        return response;
-      } catch (fetchError) {
-        console.error("Fetch error:", fetchError);
-        throw fetchError;
-      }
+      // Use the retry function
+      await createPoolWithRetry(values);
+      
+      // Success! Invalidate the cache to refresh the pool list
+      queryClient.invalidateQueries({ queryKey: ["/api/liquidity-pools"] });
+      
+      toast({
+        title: "Success!",
+        description: "Liquidity pool created successfully",
+      });
 
       createPoolForm.reset();
       setActiveTab("myPools");

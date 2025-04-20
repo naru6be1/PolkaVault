@@ -209,18 +209,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new liquidity pool
   app.post("/api/liquidity-pools", async (req, res) => {
     try {
+      console.log("Creating liquidity pool with payload:", req.body);
+      
+      // Validate the request body
       const payload = createLiquidityPoolSchema.parse(req.body);
+      console.log("Validated payload:", payload);
       
-      // Get the assets
-      const assetA = await storage.getAssetById(payload.assetAId);
-      const assetB = await storage.getAssetById(payload.assetBId);
+      // Get the assets with detailed error handling
+      let assetA;
+      try {
+        assetA = await storage.getAssetById(payload.assetAId);
+        console.log("Asset A:", assetA);
+      } catch (assetAError) {
+        console.error("Error fetching Asset A:", assetAError);
+        return res.status(500).json({ 
+          message: "Failed to fetch first asset", 
+          assetId: payload.assetAId,
+          error: assetAError.message
+        });
+      }
       
-      if (!assetA || !assetB) {
-        return res.status(404).json({ message: "One or both assets not found" });
+      let assetB;
+      try {
+        assetB = await storage.getAssetById(payload.assetBId);
+        console.log("Asset B:", assetB);
+      } catch (assetBError) {
+        console.error("Error fetching Asset B:", assetBError);
+        return res.status(500).json({ 
+          message: "Failed to fetch second asset", 
+          assetId: payload.assetBId,
+          error: assetBError.message
+        });
+      }
+      
+      if (!assetA) {
+        console.error("Asset A not found:", payload.assetAId);
+        return res.status(404).json({ 
+          message: "First asset not found", 
+          assetId: payload.assetAId 
+        });
+      }
+      
+      if (!assetB) {
+        console.error("Asset B not found:", payload.assetBId);
+        return res.status(404).json({ 
+          message: "Second asset not found", 
+          assetId: payload.assetBId 
+        });
       }
       
       if (payload.assetAId === payload.assetBId) {
-        return res.status(400).json({ message: "Cannot create a pool with the same asset" });
+        console.error("Same asset used for both sides:", payload.assetAId);
+        return res.status(400).json({ 
+          message: "Cannot create a pool with the same asset", 
+          assetId: payload.assetAId 
+        });
+      }
+      
+      // Check for existing pool with the same assets
+      const existingPools = await storage.getLiquidityPools();
+      const existingPool = existingPools.find(pool => 
+        (pool.assetAId === payload.assetAId && pool.assetBId === payload.assetBId) ||
+        (pool.assetAId === payload.assetBId && pool.assetBId === payload.assetAId)
+      );
+      
+      if (existingPool) {
+        console.error("Pool already exists for these assets:", existingPool);
+        return res.status(409).json({ 
+          message: "A pool already exists for these assets", 
+          existingPoolId: existingPool.id 
+        });
       }
       
       // Create the liquidity pool
@@ -236,11 +294,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: new Date(),
       };
       
-      const validatedPool = insertLiquidityPoolSchema.parse(newPool);
-      const pool = await storage.createLiquidityPool(validatedPool);
+      console.log("Creating new pool:", newPool);
       
-      res.status(201).json(pool);
+      try {
+        const validatedPool = insertLiquidityPoolSchema.parse(newPool);
+        console.log("Validated pool:", validatedPool);
+        
+        const pool = await storage.createLiquidityPool(validatedPool);
+        console.log("Created pool:", pool);
+        
+        res.status(201).json(pool);
+      } catch (poolError) {
+        console.error("Error creating pool:", poolError);
+        
+        if (poolError instanceof ZodError) {
+          return res.status(400).json({ 
+            message: "Invalid liquidity pool data", 
+            errors: poolError.errors 
+          });
+        }
+        
+        return res.status(500).json({ 
+          message: "Failed to create liquidity pool in database", 
+          error: poolError.message 
+        });
+      }
     } catch (error) {
+      console.error("Unexpected error in pool creation:", error);
+      
       if (error instanceof ZodError) {
         return res.status(400).json({ 
           message: "Invalid liquidity pool data", 
@@ -248,7 +329,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      res.status(500).json({ message: "Failed to create liquidity pool" });
+      res.status(500).json({ 
+        message: "Failed to create liquidity pool", 
+        error: error.message
+      });
     }
   });
 

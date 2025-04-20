@@ -444,7 +444,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the assets
       const assetA = await storage.getAssetById(pool.assetAId);
+      if (!assetA) {
+        console.log("Asset A not found for ID:", pool.assetAId);
+        return res.status(404).json({ message: "Asset A not found" });
+      }
+      
       const assetB = await storage.getAssetById(pool.assetBId);
+      if (!assetB) {
+        console.log("Asset B not found for ID:", pool.assetBId);
+        return res.status(404).json({ message: "Asset B not found" });
+      }
       
       // Create transactions for the withdrawal
       const transactionA = {
@@ -753,24 +762,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unstake assets
   app.post("/api/staking-positions/:id/unstake", async (req, res) => {
     try {
+      console.log("Unstake request received for position ID:", req.params.id, "with body:", req.body);
       const { id } = req.params;
       const { amount } = unstakeAssetsSchema.parse(req.body);
+      
+      console.log("Parsed unstake amount:", amount);
       
       // Get the position
       const position = await storage.getStakingPositionById(parseInt(id));
       if (!position) {
+        console.log("Position not found for ID:", id);
         return res.status(404).json({ message: "Staking position not found" });
       }
       
+      console.log("Found position:", position);
+      
       // Check if the position is locked
-      if (position.endDate && new Date() < new Date(position.endDate)) {
+      if (position.endDate && new Date() < new Date(position.endDate.toString())) {
+        console.log("Position is locked until:", new Date(position.endDate.toString()).toLocaleDateString());
         return res.status(400).json({ 
-          message: "Position is locked until " + new Date(position.endDate).toLocaleDateString() 
+          message: "Position is locked until " + new Date(position.endDate.toString()).toLocaleDateString() 
         });
       }
       
       // Check if amount is valid
+      console.log("Comparing amounts:", amount, position.stakedAmount);
       if (BigInt(amount) > BigInt(position.stakedAmount)) {
+        console.log("Amount exceeds staked amount");
         return res.status(400).json({ 
           message: "Unstake amount exceeds staked amount" 
         });
@@ -779,31 +797,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the pool
       const pool = await storage.getStakingPoolById(position.poolId);
       if (!pool) {
+        console.log("Pool not found for ID:", position.poolId);
         return res.status(404).json({ message: "Staking pool not found" });
       }
       
+      console.log("Found pool:", pool);
+      
       // Update position
       const remainingStaked = (BigInt(position.stakedAmount) - BigInt(amount)).toString();
+      console.log("Remaining staked amount:", remainingStaked);
       
+      let positionUpdateResult;
       if (BigInt(remainingStaked) <= BigInt(0)) {
         // Remove the position
-        await storage.deleteStakingPosition(position.id);
+        console.log("Deleting position as no remaining stake");
+        positionUpdateResult = await storage.deleteStakingPosition(position.id);
+        console.log("Position delete result:", positionUpdateResult);
       } else {
         // Update the position
-        await storage.updateStakingPosition(position.id, {
+        console.log("Updating position with new staked amount");
+        positionUpdateResult = await storage.updateStakingPosition(position.id, {
           stakedAmount: remainingStaked
         });
+        console.log("Position update result:", positionUpdateResult);
       }
       
       // Update pool total staked
       const newTotalStaked = (BigInt(pool.totalStaked) - BigInt(amount)).toString();
-      await storage.updateStakingPool(pool.id, {
+      console.log("New pool total staked:", newTotalStaked);
+      
+      const poolUpdateResult = await storage.updateStakingPool(pool.id, {
         totalStaked: newTotalStaked,
         updatedAt: new Date()
       });
+      console.log("Pool update result:", poolUpdateResult);
       
       // Get the asset
       const asset = await storage.getAssetById(pool.assetId);
+      if (!asset) {
+        console.log("Asset not found for ID:", pool.assetId);
+        return res.status(404).json({ message: "Asset not found" });
+      }
+      
+      console.log("Found asset:", asset);
       
       // Create transaction for the unstake
       const transaction = {
@@ -821,22 +857,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stakingId: pool.id,
       };
       
+      console.log("Creating transaction:", transaction);
       const validatedTransaction = insertTransactionSchema.parse(transaction);
-      await storage.createTransaction(validatedTransaction);
+      const newTransaction = await storage.createTransaction(validatedTransaction);
+      console.log("Transaction created:", newTransaction);
       
       res.status(200).json({
         amountUnstaked: amount,
         positionRemoved: BigInt(remainingStaked) <= BigInt(0),
+        transaction: newTransaction
       });
     } catch (error) {
+      console.error("Error in unstaking process:", error);
+      
       if (error instanceof ZodError) {
+        console.log("Validation error:", error.errors);
         return res.status(400).json({ 
           message: "Invalid unstaking data", 
           errors: error.errors 
         });
       }
       
-      res.status(500).json({ message: "Failed to unstake assets" });
+      // Log more detailed error information
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+      
+      console.error("Unstaking error details:", errorMessage);
+      console.error("Error stack:", errorStack);
+      
+      res.status(500).json({ 
+        message: "Failed to unstake assets", 
+        error: errorMessage 
+      });
     }
   });
 
@@ -859,7 +911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate rewards
       const now = new Date();
-      const lastClaimDate = new Date(position.lastClaimDate);
+      const lastClaimDate = position.lastClaimDate ? new Date(position.lastClaimDate.toString()) : new Date(position.startDate.toString());
       const daysSinceLastClaim = Math.floor((now.getTime() - lastClaimDate.getTime()) / (1000 * 60 * 60 * 24));
       
       if (daysSinceLastClaim <= 0) {
@@ -883,6 +935,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the asset
       const asset = await storage.getAssetById(pool.assetId);
+      if (!asset) {
+        console.log("Asset not found for ID:", pool.assetId);
+        return res.status(404).json({ message: "Asset not found" });
+      }
       
       // Create transaction for the reward
       const transaction = {

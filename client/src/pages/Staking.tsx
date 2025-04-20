@@ -113,24 +113,31 @@ export default function Staking() {
   
   const unstakeMutation = useMutation({
     mutationFn: async (values: { positionId: number; amount: string }) => {
+      console.log("Sending unstake request:", values);
       return apiRequest(`/api/staking-positions/${values.positionId}/unstake`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ amount: values.amount }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Unstake successful:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/staking-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-pools"] });
       toast({
         title: "Success!",
         description: "Assets unstaked successfully",
       });
       unstakeForm.reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error unstaking assets:", error);
+      const errorMessage = error?.message || error?.error || "Failed to unstake assets";
       toast({
         title: "Error",
-        description: "Failed to unstake assets",
+        description: errorMessage,
         variant: "destructive",
       });
     }

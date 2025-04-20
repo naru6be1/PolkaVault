@@ -764,7 +764,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Unstake request received for position ID:", req.params.id, "with body:", req.body);
       const { id } = req.params;
-      const { amount } = unstakeAssetsSchema.parse(req.body);
+      
+      // Create a valid payload for the schema that includes both positionId and amount
+      const payload = {
+        positionId: parseInt(id),
+        amount: req.body.amount
+      };
+      
+      // Now validate the complete payload
+      const { amount } = unstakeAssetsSchema.parse(payload);
       
       console.log("Parsed unstake amount:", amount);
       

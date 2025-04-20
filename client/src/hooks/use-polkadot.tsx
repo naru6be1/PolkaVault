@@ -51,11 +51,11 @@ export function PolkadotProvider({ children }: { children: ReactNode }) {
         setError(null);
       } catch (err) {
         console.error('Failed to initialize Polkadot API:', err);
-        setError('Failed to connect to Asset Hub. Please try again.');
+        setError('Failed to connect to PolkaVault. Please try again.');
         toast({
           variant: "destructive",
           title: "Connection Error",
-          description: "Failed to connect to Asset Hub. Please check your network connection.",
+          description: "Failed to connect to PolkaVault. Please check your network connection.",
         });
       } finally {
         setLoading(false);

@@ -172,7 +172,7 @@ export default function AssetModal({ isOpen, onClose, onAssetCreated }: AssetMod
         <DialogHeader>
           <DialogTitle>Create New Asset</DialogTitle>
           <DialogDescription>
-            Complete the form below to create a new asset on Asset Hub.
+            Complete the form below to create a new asset on PolkaVault.
           </DialogDescription>
         </DialogHeader>
         

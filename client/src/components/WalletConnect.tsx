@@ -51,7 +51,7 @@ export default function WalletConnect() {
         </CardHeader>
         <CardContent className="pt-4">
           <p className="text-sm text-gray-500 mb-4">
-            You need to connect your wallet to interact with Asset Hub. Make sure you have the Polkadot.js extension installed.
+            You need to connect your wallet to interact with PolkaVault. Make sure you have the Polkadot.js extension installed.
           </p>
         </CardContent>
         <CardFooter>
@@ -68,7 +68,7 @@ export default function WalletConnect() {
     <Card>
       <CardHeader>
         <CardTitle>Wallet Connected</CardTitle>
-        <CardDescription>Your wallet is connected to Asset Hub</CardDescription>
+        <CardDescription>Your wallet is connected to PolkaVault</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

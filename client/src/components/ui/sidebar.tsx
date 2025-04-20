@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex items-center justify-between h-16 border-b px-4">
           <div className="flex items-center">
             <div className="h-8 w-8 bg-pink-500 rounded-full"></div>
-            <span className="ml-2 text-lg font-semibold text-gray-900">Asset Hub</span>
+            <span className="ml-2 text-lg font-semibold text-gray-900">PolkaVault</span>
           </div>
           {isOpen && (
             <button 

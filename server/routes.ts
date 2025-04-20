@@ -637,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const newStakedAmount = (BigInt(existingPosition.stakedAmount) + BigInt(payload.amount)).toString();
           
           await storage.updateStakingPosition(existingPosition.id, {
-            stakedAmount: newStakedAmount,
+            stakedAmount: newStakedAmount
           });
           
           position = await storage.getStakingPositionById(existingPosition.id);
@@ -682,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const newTotalStaked = (BigInt(pool.totalStaked) + BigInt(payload.amount)).toString();
         await storage.updateStakingPool(pool.id, {
-          totalStaked: newTotalStaked,
+          totalStaked: newTotalStaked
         });
         
         // Create transaction for the stake
@@ -778,16 +778,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Update the position
         await storage.updateStakingPosition(position.id, {
-          stakedAmount: remainingStaked,
-          updatedAt: new Date(),
+          stakedAmount: remainingStaked
         });
       }
       
       // Update pool total staked
       const newTotalStaked = (BigInt(pool.totalStaked) - BigInt(amount)).toString();
       await storage.updateStakingPool(pool.id, {
-        totalStaked: newTotalStaked,
-        updatedAt: new Date(),
+        totalStaked: newTotalStaked
       });
       
       // Get the asset
@@ -866,8 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newRewardEarned = (BigInt(position.rewardEarned) + BigInt(rewardAmount)).toString();
       await storage.updateStakingPosition(position.id, {
         rewardEarned: "0", // Reset rewards after claiming
-        lastClaimDate: now,
-        updatedAt: now,
+        lastClaimDate: now
       });
       
       // Get the asset

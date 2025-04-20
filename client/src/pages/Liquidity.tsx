@@ -416,81 +416,150 @@ export default function Liquidity() {
 
         {/* My Pools Tab */}
         <TabsContent value="myPools">
-          <div className="grid gap-4 md:grid-cols-2">
-            {isLoadingPositions ? (
-              <p>Loading your positions...</p>
-            ) : myPositions?.length > 0 ? (
-              myPositions.map((position: any) => {
-                const pool = getPoolDetails(position.poolId);
-                return (
-                  <Card key={position.id}>
+          <div>
+            {/* Display all created pools section */}
+            <h3 className="text-lg font-medium mb-4">Created Pools</h3>
+            <div className="grid gap-4 md:grid-cols-2 mb-8">
+              {isLoadingPools ? (
+                <p>Loading pools...</p>
+              ) : liquidityPools?.length > 0 ? (
+                liquidityPools.map((pool: LiquidityPool) => (
+                  <Card key={pool.id}>
                     <CardHeader>
-                      <CardTitle>{pool?.name || `Pool #${position.poolId}`}</CardTitle>
-                      <CardDescription>Your liquidity position</CardDescription>
+                      <CardTitle>{pool.name}</CardTitle>
+                      <CardDescription>
+                        Fee: {(pool.fee * 100).toFixed(2)}%
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span>LP Tokens:</span>
-                          <span>{position.lpTokens}</span>
+                          <span>Asset A:</span>
+                          <span>{pool.assetAId}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Share:</span>
-                          <span>{(position.sharePercentage * 100).toFixed(2)}%</span>
+                          <span>Asset B:</span>
+                          <span>{pool.assetBId}</span>
                         </div>
-                        <Separator />
-                        <Form {...withdrawLiquidityForm}>
-                          <form onSubmit={withdrawLiquidityForm.handleSubmit(handleWithdrawLiquidity)} className="space-y-4">
-                            <FormField
-                              control={withdrawLiquidityForm.control}
-                              name="positionId"
-                              render={({ field }) => (
-                                <FormItem hidden>
-                                  <FormControl>
-                                    <Input type="hidden" {...field} value={position.id} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={withdrawLiquidityForm.control}
-                              name="percentage"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Withdraw Amount</FormLabel>
-                                  <FormControl>
-                                    <div className="flex items-center gap-2">
-                                      <Input
-                                        type="range"
-                                        min={0.01}
-                                        max={1}
-                                        step={0.01}
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                      />
-                                      <span>{(field.value * 100).toFixed(0)}%</span>
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button type="submit" className="w-full">Withdraw</Button>
-                          </form>
-                        </Form>
+                        <div className="flex justify-between">
+                          <span>Reserve A:</span>
+                          <span>{pool.reserveA}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Reserve B:</span>
+                          <span>{pool.reserveB}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>LP Token Supply:</span>
+                          <span>{pool.lpTokenSupply}</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={() => {
+                            provideLiquidityForm.reset({
+                              poolId: pool.id,
+                              amountA: "",
+                              amountB: "",
+                            });
+                            setActiveTab("allPools");
+                          }}
+                        >
+                          Provide Liquidity
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })
-            ) : (
-              <div className="col-span-2">
-                <StatusBanner 
-                  message="You don't have any liquidity positions yet. Add liquidity to a pool to get started." 
-                  type="info" 
-                />
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="col-span-2">
+                  <StatusBanner 
+                    message="You haven't created any liquidity pools yet. Use the Create Pool tab to get started." 
+                    type="info" 
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Active positions section */}
+            <h3 className="text-lg font-medium mb-4">Your Liquidity Positions</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {isLoadingPositions ? (
+                <p>Loading your positions...</p>
+              ) : myPositions?.length > 0 ? (
+                myPositions.map((position: any) => {
+                  const pool = getPoolDetails(position.poolId);
+                  return (
+                    <Card key={position.id}>
+                      <CardHeader>
+                        <CardTitle>{pool?.name || `Pool #${position.poolId}`}</CardTitle>
+                        <CardDescription>Your liquidity position</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>LP Tokens:</span>
+                            <span>{position.lpTokens}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Share:</span>
+                            <span>{(position.sharePercentage * 100).toFixed(2)}%</span>
+                          </div>
+                          <Separator />
+                          <Form {...withdrawLiquidityForm}>
+                            <form onSubmit={withdrawLiquidityForm.handleSubmit(handleWithdrawLiquidity)} className="space-y-4">
+                              <FormField
+                                control={withdrawLiquidityForm.control}
+                                name="positionId"
+                                render={({ field }) => (
+                                  <FormItem hidden>
+                                    <FormControl>
+                                      <Input type="hidden" {...field} value={position.id} />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={withdrawLiquidityForm.control}
+                                name="percentage"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Withdraw Amount</FormLabel>
+                                    <FormControl>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="range"
+                                          min={0.01}
+                                          max={1}
+                                          step={0.01}
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                        />
+                                        <span>{(field.value * 100).toFixed(0)}%</span>
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full">Withdraw</Button>
+                            </form>
+                          </Form>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              ) : (
+                <div className="col-span-2">
+                  <StatusBanner 
+                    message="You don't have any liquidity positions yet. Add liquidity to a pool to get started." 
+                    type="info" 
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </TabsContent>
 

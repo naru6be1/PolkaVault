@@ -151,6 +151,21 @@ export default function Liquidity() {
         
         console.log(`Attempt ${attempt} - Parsed pool creation response:`, response);
         
+        // Special handling for duplicate pool error (HTTP 409 Conflict)
+        if (fetchResponse.status === 409) {
+          console.log("Pool already exists, treating as a non-error condition");
+          
+          // We'll treat this as a "success" but with a different message
+          // This prevents retries and displays a nicer message to the user
+          return { 
+            success: true,
+            status: fetchResponse.status,
+            message: response.message || "A pool already exists for these assets",
+            existingPoolId: response.existingPoolId,
+            alreadyExists: true
+          };
+        }
+        
         if (!fetchResponse.ok) {
           throw new Error(response.message || response.error || "Failed to create pool");
         }
@@ -226,15 +241,25 @@ export default function Liquidity() {
       });
 
       // Use the retry function
-      await createPoolWithRetry(values);
+      const response = await createPoolWithRetry(values);
       
       // Success! Invalidate the cache to refresh the pool list
       queryClient.invalidateQueries({ queryKey: ["/api/liquidity-pools"] });
       
-      toast({
-        title: "Success!",
-        description: "Liquidity pool created successfully",
-      });
+      // Check if this was an "already exists" response
+      if (response.alreadyExists) {
+        toast({
+          title: "Pool Already Exists",
+          description: response.message || "A pool already exists for these assets",
+          // Use a different variant - more of an info than error or success
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Liquidity pool created successfully",
+        });
+      }
 
       createPoolForm.reset();
       setActiveTab("myPools");

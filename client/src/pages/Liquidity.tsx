@@ -35,6 +35,12 @@ export default function Liquidity() {
     queryKey: ["/api/liquidity-positions"],
     enabled: !!selectedAccount,
   });
+  
+  // Get all available assets
+  const { data: assets, isLoading: isLoadingAssets } = useQuery({
+    queryKey: ["/api/assets"],
+    enabled: true,
+  });
 
   // Form for creating a new pool
   const createPoolForm = useForm({
@@ -421,9 +427,17 @@ export default function Liquidity() {
                                 <SelectValue placeholder="Select asset" />
                               </SelectTrigger>
                               <SelectContent>
-                                {/* This would come from a query to get all assets */}
-                                <SelectItem value="asset1">Asset 1</SelectItem>
-                                <SelectItem value="asset2">Asset 2</SelectItem>
+                                {isLoadingAssets ? (
+                                  <SelectItem value="">Loading assets...</SelectItem>
+                                ) : assets && assets.length > 0 ? (
+                                  assets.map((asset: any) => (
+                                    <SelectItem key={`A-${asset.assetId}`} value={asset.assetId}>
+                                      {asset.name} ({asset.symbol})
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="">No assets available</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                           </FormControl>
@@ -447,9 +461,17 @@ export default function Liquidity() {
                                 <SelectValue placeholder="Select asset" />
                               </SelectTrigger>
                               <SelectContent>
-                                {/* This would come from a query to get all assets */}
-                                <SelectItem value="asset1">Asset 1</SelectItem>
-                                <SelectItem value="asset2">Asset 2</SelectItem>
+                                {isLoadingAssets ? (
+                                  <SelectItem value="">Loading assets...</SelectItem>
+                                ) : assets && assets.length > 0 ? (
+                                  assets.map((asset: any) => (
+                                    <SelectItem key={`B-${asset.assetId}`} value={asset.assetId}>
+                                      {asset.name} ({asset.symbol})
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="">No assets available</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                           </FormControl>

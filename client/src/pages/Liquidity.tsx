@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { usePolkadot } from "@/hooks/use-polkadot";
-import { LiquidityPool, ProvideLiquidityPayload, liquidityPools } from "@shared/schema";
+import { LiquidityPool, LiquidityPosition, Asset, ProvideLiquidityPayload } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,19 +25,19 @@ export default function Liquidity() {
   const [activeTab, setActiveTab] = useState("myPools");
 
   // Get all liquidity pools
-  const { data: liquidityPools, isLoading: isLoadingPools } = useQuery({
+  const { data: liquidityPools, isLoading: isLoadingPools } = useQuery<LiquidityPool[]>({
     queryKey: ["/api/liquidity-pools"],
     enabled: !!api,
   });
 
   // Get user's liquidity positions
-  const { data: myPositions, isLoading: isLoadingPositions } = useQuery({
+  const { data: myPositions, isLoading: isLoadingPositions } = useQuery<LiquidityPosition[]>({
     queryKey: ["/api/liquidity-positions"],
     enabled: !!selectedAccount,
   });
   
   // Get all available assets
-  const { data: assets, isLoading: isLoadingAssets } = useQuery({
+  const { data: assets, isLoading: isLoadingAssets } = useQuery<Asset[]>({
     queryKey: ["/api/assets"],
     enabled: true,
   });
@@ -105,11 +105,38 @@ export default function Liquidity() {
         });
         return;
       }
+      
+      console.log("Creating pool with values:", values);
+      
+      // Check if assetAId and assetBId are the same
+      if (values.assetAId === values.assetBId) {
+        toast({
+          title: "Error",
+          description: "Cannot create a pool with the same asset on both sides",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Ensure we have valid asset IDs
+      if (!values.assetAId || !values.assetBId) {
+        toast({
+          title: "Error",
+          description: "Please select both assets for the pool",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      await apiRequest("/api/liquidity-pools", {
+      const response = await apiRequest("/api/liquidity-pools", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
       });
+      
+      console.log("Pool creation response:", response);
 
       toast({
         title: "Success!",
@@ -118,11 +145,15 @@ export default function Liquidity() {
 
       createPoolForm.reset();
       setActiveTab("myPools");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating pool:", error);
+      
+      // Extract more detailed error message if available
+      const errorMessage = error?.message || error?.error || "Failed to create liquidity pool";
+      
       toast({
         title: "Error",
-        description: "Failed to create liquidity pool",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -138,11 +169,28 @@ export default function Liquidity() {
         });
         return;
       }
+      
+      console.log("Providing liquidity with values:", values);
+      
+      // Basic validation
+      if (!values.amountA || !values.amountB) {
+        toast({
+          title: "Error",
+          description: "Please enter amounts for both assets",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      await apiRequest("/api/liquidity-positions", {
+      const response = await apiRequest("/api/liquidity-positions", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
       });
+      
+      console.log("Liquidity provision response:", response);
 
       toast({
         title: "Success!",
@@ -151,11 +199,15 @@ export default function Liquidity() {
 
       provideLiquidityForm.reset();
       setActiveTab("myPools");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error providing liquidity:", error);
+      
+      // Extract more detailed error message if available
+      const errorMessage = error?.message || error?.error || "Failed to provide liquidity";
+      
       toast({
         title: "Error",
-        description: "Failed to provide liquidity",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -171,23 +223,46 @@ export default function Liquidity() {
         });
         return;
       }
+      
+      console.log("Withdrawing liquidity with values:", values);
+      
+      // Validate position ID
+      if (!values.positionId) {
+        toast({
+          title: "Error",
+          description: "Invalid position ID",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      await apiRequest(`/api/liquidity-positions/${values.positionId}/withdraw`, {
+      const response = await apiRequest(`/api/liquidity-positions/${values.positionId}/withdraw`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ percentage: values.percentage }),
       });
+      
+      console.log("Withdraw liquidity response:", response);
 
       toast({
         title: "Success!",
         description: "Liquidity withdrawn successfully",
       });
 
+      // Invalidate cache to refresh the positions
+      queryClient.invalidateQueries({ queryKey: ["/api/liquidity-positions"] });
       withdrawLiquidityForm.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error withdrawing liquidity:", error);
+      
+      // Extract more detailed error message if available
+      const errorMessage = error?.message || error?.error || "Failed to withdraw liquidity";
+      
       toast({
         title: "Error",
-        description: "Failed to withdraw liquidity",
+        description: errorMessage,
         variant: "destructive",
       });
     }

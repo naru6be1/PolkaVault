@@ -668,7 +668,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           
           const validatedPosition = insertStakingPositionSchema.parse(newPosition);
+          console.log("Creating staking position with data:", validatedPosition);
           position = await storage.createStakingPosition(validatedPosition);
+          console.log("Staking position created:", position);
         } catch (e) {
           console.error("Error creating new position:", e);
           return res.status(500).json({ 
@@ -682,7 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const newTotalStaked = (BigInt(pool.totalStaked) + BigInt(payload.amount)).toString();
         await storage.updateStakingPool(pool.id, {
-          totalStaked: newTotalStaked
+          totalStaked: newTotalStaked,
+          updatedAt: new Date()
         });
         
         // Create transaction for the stake
@@ -785,7 +788,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update pool total staked
       const newTotalStaked = (BigInt(pool.totalStaked) - BigInt(amount)).toString();
       await storage.updateStakingPool(pool.id, {
-        totalStaked: newTotalStaked
+        totalStaked: newTotalStaked,
+        updatedAt: new Date()
       });
       
       // Get the asset

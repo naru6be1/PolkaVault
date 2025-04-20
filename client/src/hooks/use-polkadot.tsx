@@ -100,7 +100,7 @@ export function PolkadotProvider({ children }: { children: ReactNode }) {
         setSelectedAccount(accounts[0]);
         toast({
           title: "Connection Successful",
-          description: "Successfully connected to Polkadot Asset Hub",
+          description: "Successfully connected to PolkaVault",
         });
       }
     } catch (err: any) {

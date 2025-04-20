@@ -36,7 +36,7 @@ export default function Dashboard() {
     <>
       {showConnectionSuccess && (
         <StatusBanner 
-          message="Successfully connected to Polkadot Asset Hub" 
+          message="Successfully connected to PolkaVault" 
           type="success"
         />
       )}

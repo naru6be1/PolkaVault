@@ -5,7 +5,7 @@ import { Keyring } from '@polkadot/keyring';
 import { stringToU8a } from '@polkadot/util';
 import { BN } from '@polkadot/util';
 
-// Default WS endpoint for Asset Hub
+// Default WS endpoint for Polkadot Asset Hub network
 // Using a public test endpoint for better reliability in this example
 const DEFAULT_ENDPOINT = 'wss://westend-asset-hub-rpc.polkadot.io';
 
@@ -15,7 +15,7 @@ export async function initApi(endpoint = DEFAULT_ENDPOINT): Promise<ApiPromise> 
   return api;
 }
 
-export async function connectExtension(appName = 'Polkadot Asset Hub'): Promise<InjectedAccountWithMeta[]> {
+export async function connectExtension(appName = 'PolkaVault'): Promise<InjectedAccountWithMeta[]> {
   const extensions = await web3Enable(appName);
   
   if (extensions.length === 0) {
@@ -101,7 +101,7 @@ export async function createAsset(
 ) {
   const injector = await web3FromSource(account.meta.source);
   
-  // This is a simplified version - in a real app you would use the actual asset hub calls
+  // This is a simplified version - in a real app you would use the actual Polkadot network calls
   // For now, we'll just create metadata to simulate asset creation
   // In production, this would involve calls to assets.create, assets.setMetadata, etc.
   

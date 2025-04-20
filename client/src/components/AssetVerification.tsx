@@ -138,7 +138,7 @@ export default function AssetVerification({ assetId, assetName }: AssetVerificat
                     <>
                       <strong>This is a local test asset</strong> that has not been created on the Polkadot blockchain.
                       <br /><br />
-                      In a production environment, you would need to create this asset on-chain first using the Polkadot Asset Hub.
+                      In a production environment, you would need to create this asset on-chain first using the Polkadot network.
                     </>
                   ) : (
                     <>

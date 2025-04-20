@@ -43,6 +43,9 @@ export default function Liquidity() {
   });
 
   // Form for creating a new pool
+  // Debug available assets
+  console.log("Available assets for pool creation:", assets);
+  
   const createPoolForm = useForm({
     resolver: zodResolver(
       z.object({
@@ -97,6 +100,10 @@ export default function Liquidity() {
     fee: number;
   }) => {
     try {
+      // Debug form validation state
+      console.log("Form state:", createPoolForm.formState);
+      console.log("Form errors:", createPoolForm.formState.errors);
+      
       if (!api || !selectedAccount) {
         toast({
           title: "Error",
@@ -128,20 +135,55 @@ export default function Liquidity() {
         return;
       }
 
-      const response = await apiRequest("/api/liquidity-pools", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      
-      console.log("Pool creation response:", response);
-
-      toast({
-        title: "Success!",
-        description: "Liquidity pool created successfully",
-      });
+      try {
+        // Make the request directly to see raw response
+        const fetchResponse = await fetch("/api/liquidity-pools", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+        
+        console.log("Raw response status:", fetchResponse.status);
+        
+        // Display headers as simple object
+        const headers: Record<string, string> = {};
+        fetchResponse.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log("Raw response headers:", headers);
+        
+        const responseText = await fetchResponse.text();
+        console.log("Raw response body:", responseText);
+        
+        let response;
+        try {
+          response = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Failed to parse response as JSON:", e);
+          throw new Error("Invalid response format from server");
+        }
+        
+        console.log("Parsed pool creation response:", response);
+        
+        if (!fetchResponse.ok) {
+          throw new Error(response.message || response.error || "Failed to create pool");
+        }
+        
+        // Success! Invalidate the cache to refresh the pool list
+        queryClient.invalidateQueries({ queryKey: ["/api/liquidity-pools"] });
+        
+        toast({
+          title: "Success!",
+          description: "Liquidity pool created successfully",
+        });
+        
+        return response;
+      } catch (fetchError) {
+        console.error("Fetch error:", fetchError);
+        throw fetchError;
+      }
 
       createPoolForm.reset();
       setActiveTab("myPools");

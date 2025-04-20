@@ -33,6 +33,13 @@ export default function Staking() {
     queryKey: ["/api/staking-pools"],
     enabled: !!api,
   });
+  
+  // Get all assets for forms
+  const { data: assets = [], isLoading: isLoadingAssets } = useQuery<any[]>({
+    queryKey: ["/api/assets"],
+    enabled: !!api,
+    staleTime: 0, // Always get fresh data
+  });
 
   // Get user's staking positions
   const { data: myPositions = [], isLoading: isLoadingPositions } = useQuery<any[]>({
@@ -588,9 +595,17 @@ export default function Staking() {
                               <SelectValue placeholder="Select asset" />
                             </SelectTrigger>
                             <SelectContent>
-                              {/* This would come from a query to get all assets */}
-                              <SelectItem value="asset1">Asset 1</SelectItem>
-                              <SelectItem value="asset2">Asset 2</SelectItem>
+                              {isLoadingAssets ? (
+                                <SelectItem value="" disabled>Loading assets...</SelectItem>
+                              ) : assets.length > 0 ? (
+                                assets.map((asset) => (
+                                  <SelectItem key={asset.assetId} value={asset.assetId}>
+                                    {asset.name} ({asset.symbol})
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="" disabled>No assets available</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </FormControl>

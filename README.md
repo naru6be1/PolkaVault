@@ -51,6 +51,31 @@ PolkaVault enables users to easily create, verify, and transfer blockchain asset
 - @polkadot/extension-dapp for wallet connections
 - @polkadot/keyring for cryptographic operations
 
+## Polkadot Technologies Used
+
+PolkaVault leverages several key Polkadot technologies to provide a seamless blockchain experience:
+
+### Core Polkadot Components
+- **Polkadot.js API**: Connects directly to Westend Asset Hub via WebSocket RPC endpoints, providing access to on-chain functionality for asset management
+- **Polkadot Extension Integration**: Uses web3Enable and web3Accounts from @polkadot/extension-dapp to connect to user wallets securely without exposing private keys
+- **Asset Hub Parachain**: Interacts with Polkadot's specialized parachain for asset creation and management (formerly known as Statemint/Statemine)
+- **Substrate Assets Module**: Utilizes the built-in assets pallet functions for creating, transferring, and verifying on-chain assets
+
+### Technical Implementation Details
+- **Transaction Construction**: Uses api.tx batching for complex operations that require multiple changes in a single atomic transaction
+- **Runtime Metadata Handling**: Adapts to Substrate's dynamic type system to extract asset metadata and account information
+- **ExtrinsicSignature**: Employs web3FromSource for secure transaction signing through the browser extension
+- **Substrate Queries**: Leverages api.query to fetch asset information, balances and verify ownership directly from the blockchain state
+- **BN (Big Number)**: Uses specialized handling for blockchain numeric values to maintain precision with large asset amounts
+
+### Asset Operations
+- **Create Asset**: api.tx.assets.create + api.tx.assets.setMetadata + api.tx.assets.mint
+- **Transfer Asset**: api.tx.assets.transfer
+- **Verify Asset**: api.query.assets.asset + api.query.assets.metadata
+- **Get Balances**: api.query.assets.account
+
+PolkaVault acts as a user-friendly interface to the otherwise complex Polkadot Asset Hub APIs, providing intuitive asset management with direct blockchain integration.
+
 ## Getting Started
 
 ### Prerequisites

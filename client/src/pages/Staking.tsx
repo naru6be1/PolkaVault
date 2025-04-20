@@ -75,25 +75,37 @@ export default function Staking() {
   
   const stakeMutation = useMutation({
     mutationFn: async (values: StakeAssetsPayload) => {
+      console.log("Sending stake payload:", values);
       return apiRequest("/api/staking-positions", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/staking-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/staking-pools"] });
       toast({
         title: "Success!",
         description: "Assets staked successfully",
       });
-      stakeForm.reset();
+      // Reset any input fields
+      const inputElements = document.querySelectorAll('input[id^="stake-amount-"]');
+      inputElements.forEach((input: Element) => {
+        if (input instanceof HTMLInputElement) {
+          input.value = '';
+        }
+      });
       setActiveTab("myPositions");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error staking assets:", error);
+      const errorMessage = error?.message || error?.error || "Failed to stake assets";
       toast({
         title: "Error",
-        description: "Failed to stake assets",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -488,10 +500,20 @@ export default function Staking() {
                             const amountInput = document.getElementById(`stake-amount-${pool.id}`) as HTMLInputElement;
                             const amount = amountInput?.value || '';
                             
-                            if (!amount) {
+                            if (!amount || amount.trim() === '') {
                               toast({
                                 title: "Error",
                                 description: "Please enter an amount to stake",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            
+                            // Validate that amount is a number
+                            if (isNaN(Number(amount))) {
+                              toast({
+                                title: "Error",
+                                description: "Amount must be a valid number",
                                 variant: "destructive",
                               });
                               return;

@@ -583,24 +583,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stake assets
   app.post("/api/staking-positions", async (req, res) => {
     try {
+      console.log("Staking request body:", req.body);
+      
+      // Validate the input payload
       const payload = stakeAssetsSchema.parse(req.body);
+      console.log("Validated staking payload:", payload);
       
       // Get the pool
       const pool = await storage.getStakingPoolById(payload.poolId);
       if (!pool) {
+        console.log(`Pool with ID ${payload.poolId} not found`);
         return res.status(404).json({ message: "Staking pool not found" });
       }
       
       // Get the asset
       const asset = await storage.getAssetById(pool.assetId);
       if (!asset) {
+        console.log(`Asset with ID ${pool.assetId} not found`);
         return res.status(404).json({ message: "Pool asset not found" });
       }
       
-      // Check minimum stake amount
-      if (BigInt(payload.amount) < BigInt(pool.minStakeAmount)) {
+      // Validate the amount is a valid number
+      if (isNaN(Number(payload.amount))) {
         return res.status(400).json({ 
-          message: `Minimum stake amount is ${pool.minStakeAmount}` 
+          message: "Amount must be a valid number" 
+        });
+      }
+      
+      // Check minimum stake amount
+      try {
+        if (BigInt(payload.amount) < BigInt(pool.minStakeAmount)) {
+          return res.status(400).json({ 
+            message: `Minimum stake amount is ${pool.minStakeAmount}` 
+          });
+        }
+      } catch (e) {
+        console.error("Error comparing BigInt values:", e);
+        return res.status(400).json({ 
+          message: "Invalid amount format. Please provide a valid number." 
         });
       }
       
@@ -611,16 +631,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let position;
       
       if (existingPosition) {
+        console.log(`Updating existing position for user ${userId} in pool ${pool.id}`);
         // Update existing position
-        const newStakedAmount = (BigInt(existingPosition.stakedAmount) + BigInt(payload.amount)).toString();
-        
-        await storage.updateStakingPosition(existingPosition.id, {
-          stakedAmount: newStakedAmount,
-          updatedAt: new Date(),
-        });
-        
-        position = await storage.getStakingPositionById(existingPosition.id);
+        try {
+          const newStakedAmount = (BigInt(existingPosition.stakedAmount) + BigInt(payload.amount)).toString();
+          
+          await storage.updateStakingPosition(existingPosition.id, {
+            stakedAmount: newStakedAmount,
+          });
+          
+          position = await storage.getStakingPositionById(existingPosition.id);
+        } catch (e) {
+          console.error("Error updating existing position:", e);
+          return res.status(500).json({ 
+            message: "Error updating existing staking position", 
+            error: e instanceof Error ? e.message : String(e)
+          });
+        }
       } else {
+        console.log(`Creating new position for user ${userId} in pool ${pool.id}`);
         // Calculate end date if there's a lock period
         let endDate = null;
         if (pool.lockPeriodDays > 0) {
@@ -629,60 +658,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Create new position
-        const newPosition = {
-          userId,
-          poolId: pool.id,
-          stakedAmount: payload.amount,
-          endDate,
-          status: "active",
-        };
-        
-        const validatedPosition = insertStakingPositionSchema.parse(newPosition);
-        position = await storage.createStakingPosition(validatedPosition);
+        try {
+          const newPosition = {
+            userId,
+            poolId: pool.id,
+            stakedAmount: payload.amount,
+            endDate,
+            status: "active",
+          };
+          
+          const validatedPosition = insertStakingPositionSchema.parse(newPosition);
+          position = await storage.createStakingPosition(validatedPosition);
+        } catch (e) {
+          console.error("Error creating new position:", e);
+          return res.status(500).json({ 
+            message: "Error creating new staking position", 
+            error: e instanceof Error ? e.message : String(e)
+          });
+        }
       }
       
       // Update pool total staked
-      const newTotalStaked = (BigInt(pool.totalStaked) + BigInt(payload.amount)).toString();
-      await storage.updateStakingPool(pool.id, {
-        totalStaked: newTotalStaked,
-        updatedAt: new Date(),
-      });
-      
-      // Create transaction for the stake
-      const transaction = {
-        hash: `0x${Array.from({ length: 64 }, () => 
-          Math.floor(Math.random() * 16).toString(16)).join('')}`,
-        type: "stake",
-        assetId: pool.assetId,
-        assetName: asset.name,
-        assetSymbol: asset.symbol,
-        amount: payload.amount,
-        sender: "user_wallet", // Would be the user's wallet in a real app
-        recipient: "staking_contract", // Would be the staking contract address in a real app
-        status: "confirmed",
-        timestamp: new Date(),
-        stakingId: pool.id,
-      };
-      
-      const validatedTransaction = insertTransactionSchema.parse(transaction);
-      await storage.createTransaction(validatedTransaction);
-      
-      res.status(201).json({
-        position,
-        pool: {
-          ...pool,
+      try {
+        const newTotalStaked = (BigInt(pool.totalStaked) + BigInt(payload.amount)).toString();
+        await storage.updateStakingPool(pool.id, {
           totalStaked: newTotalStaked,
-        },
-      });
+        });
+        
+        // Create transaction for the stake
+        const transaction = {
+          hash: `0x${Array.from({ length: 64 }, () => 
+            Math.floor(Math.random() * 16).toString(16)).join('')}`,
+          type: "stake",
+          assetId: pool.assetId,
+          assetName: asset.name,
+          assetSymbol: asset.symbol,
+          amount: payload.amount,
+          sender: "user_wallet", // Would be the user's wallet in a real app
+          recipient: "staking_contract", // Would be the staking contract address in a real app
+          status: "confirmed",
+          timestamp: new Date(),
+          stakingId: pool.id,
+        };
+        
+        const validatedTransaction = insertTransactionSchema.parse(transaction);
+        await storage.createTransaction(validatedTransaction);
+        
+        console.log("Staking successful, returning position:", position);
+        
+        res.status(201).json({
+          position,
+          pool: {
+            ...pool,
+            totalStaked: newTotalStaked,
+          },
+        });
+      } catch (e) {
+        console.error("Error in final staking operations:", e);
+        return res.status(500).json({ 
+          message: "Error finalizing staking operation", 
+          error: e instanceof Error ? e.message : String(e)
+        });
+      }
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error("Validation error:", error.errors);
         return res.status(400).json({ 
           message: "Invalid staking data", 
           errors: error.errors 
         });
       }
       
-      res.status(500).json({ message: "Failed to stake assets" });
+      console.error("Unexpected error in staking assets:", error);
+      res.status(500).json({ 
+        message: "Failed to stake assets", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 
